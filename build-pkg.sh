@@ -25,7 +25,7 @@ for PKG in $PKGS ; do
           cd $SOURCEDIR
           dpkg-buildpackage --build-by="${DPKG_BUILD_MAINTAINER}" ${DPKG_BUILDPACKAGE_FLAGS} &>> $LOGFILE 
           cd ..
-          mv *.deb *.buildinfo ../../packages/
+          mv *.deb *.buildinfo *.dsc *.changes ../../packages/
           cd ../..
         }
       }
