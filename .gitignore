@@ -1,0 +1,5 @@
+.compile_commands*
+sources/
+logs/
+packages/
+finished
