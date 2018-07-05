@@ -22,8 +22,6 @@ for PKG in ${PKGS}; do
     fi
     if ! [ -f packages/${PKG}_${VERSION}[+_]*.deb ]; then
       echo no package matching ${PKG} version ${VERSION} found in packages/
-      echo installing build dependencies for $PKG
-      sudo apt-get -y build-dep $PKG &> $LOGFILE
       echo fetching sources for $PKG 
       mkdir -p sources/$PKG
       {
@@ -31,8 +29,15 @@ for PKG in ${PKGS}; do
         apt-get -y source $PKG &>> $LOGFILE
         SOURCEDIR=$(realpath $(find . -mindepth 1 -maxdepth 1 -type d | head -n1))
         ! [ -z $SOURCEDIR ] && {
-          echo Building sources from $SOURCEDIR
           cd $SOURCEDIR
+          echo installing build dependencies for $PKG
+          sudo apt-get -y build-dep $PKG &> $LOGFILE || {
+            echo normal build dependency installation failed, trying to install missing packages manually.
+            MISSING_PACKAGES=$(dpkg-checkbuilddeps 2>&1 | cut -d: -f4)
+            sudo apt autoremove -y
+            sudo apt install -y ${MISSING_PACKAGES}
+          } >> $LOGFILE || (echo failed to install build dependencies for $PKG ; exit 1)
+          echo Building sources from $SOURCEDIR
           dpkg-buildpackage --build-by="${DPKG_BUILD_MAINTAINER}" ${DPKG_BUILDPACKAGE_FLAGS} &>> $LOGFILE 
           cd ..
           echo build artifacts for $PKG: *.deb *.buildinfo *.dsc *.changes
