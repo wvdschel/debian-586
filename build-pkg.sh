@@ -2,24 +2,25 @@
 
 set -e
 
-PKGS=$@
+PKG=$1
+VERSION=$2
 ORIGDIR=$PWD
 source environment
+touch failed blacklist
 mkdir -p sources logs packages
 
-for PKG in ${PKGS}; do
-  if egrep -q "^${PKG}$" blacklist; then
-    echo $PKG is blacklisted, skipping build.
-    continue
+if ! [ -z "$PKG" ] && ! [ -z "$VERSION" ] ; then
+  if egrep -q "^${PKG} ${VERSION}$" blacklist; then
+    echo $PKG $VERSION is blacklisted, skipping build.
+    exit 0
   fi
+  if egrep -q "^${PKG} ${VERSION}$" failed; then
+    echo $PKG $VERSION has failed before, skipping build. To retry, remove the line for $PKG $VERSION from ./failed
+    exit 0
+  fi
+ 
   LOGFILE="$ORIGDIR/logs/$PKG.log"
   {
-    VERSION=$(apt list $PKG 2> /dev/null | grep $PKG/ | cut -d' ' -f2 | cut -d'+' -f1 | head -n1)
-    VERSION=${VERSION#*:}
-    if [ -z "$VERSION" ] ; then
-      echo failed to determine version for $PKG
-      exit 1
-    fi
     if ! [ -f packages/${PKG}_${VERSION}[+_]*.deb ]; then
       echo no package matching ${PKG} version ${VERSION} found in packages/
       echo fetching sources for $PKG 
@@ -34,10 +35,10 @@ for PKG in ${PKGS}; do
           sudo apt-get -y build-dep $PKG &> $LOGFILE || {
             echo normal build dependency installation failed, trying to install missing packages manually.
             MISSING_PACKAGES=$(dpkg-checkbuilddeps 2>&1 | cut -d: -f4)
-            sudo apt autoremove -y
-            sudo apt install -y ${MISSING_PACKAGES}
-          } >> $LOGFILE || (echo failed to install build dependencies for $PKG ; exit 1)
-          echo Building sources from $SOURCEDIR
+            sudo apt-get autoremove -y &>> $LOGFILE
+            sudo apt-get install -y ${MISSING_PACKAGES} &>> $LOGFILE
+          } || (echo failed to install build dependencies for $PKG ; exit 1)
+          echo building from sources in $SOURCEDIR
           dpkg-buildpackage --build-by="${DPKG_BUILD_MAINTAINER}" ${DPKG_BUILDPACKAGE_FLAGS} &>> $LOGFILE 
           cd ..
           echo build artifacts for $PKG: *.deb *.buildinfo *.dsc *.changes
@@ -50,4 +51,6 @@ for PKG in ${PKGS}; do
       echo $PKG version $VERSION was built already, not rebuilding
     fi
   } || ( echo Failed to build $PKG. Check $LOGFILE for details ; exit 1 )
-done
+else
+  echo usage: $0 PACKAGE VERSION
+fi
