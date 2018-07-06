@@ -32,6 +32,7 @@ if ! [ -z "$PKG" ] && ! [ -z "$VERSION" ] ; then
         ! [ -z $SOURCEDIR ] && {
           cd $SOURCEDIR
           echo installing build dependencies for $PKG
+          $ORIGDIR/wait-for-apt.sh # Naive attempt to allow concurrent builders. Not fool-proof
           sudo apt-get -y build-dep $PKG &> $LOGFILE || {
             echo normal build dependency installation failed, trying to install missing packages manually.
             MISSING_PACKAGES=$(dpkg-checkbuilddeps 2>&1 | cut -d: -f4)

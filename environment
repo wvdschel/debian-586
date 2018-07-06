@@ -6,3 +6,4 @@ export DPKG_BUILD_MAINTAINER='Wim Vander Schelden <lists@fixnum.org>'
 export DPKG_GPG_KEYID=A565D02BABC1078FFC47493A76A5B86C1DFA6542
 export DPKG_BUILDPACKAGE_FLAGS="--target-arch i386 -us -uc --sign-key=${DPKG_GPG_KEYID}"
 
+export DEBIAN_FRONTEND="noninteractive"
