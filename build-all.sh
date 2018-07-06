@@ -26,7 +26,7 @@ for PKG in $PACKAGES ; do
   elif ./build-pkg.sh $PKG $VERSION ; then
     echo "[$PKG_IDX/$PKG_COUNT] $PKG finished"
   else
-    echo $PKG >> failed
+    echo $PKG $VERSION >> failed
     echo "[$PKG_IDX/$PKG_COUNT] $PKG failed"
   fi
 done
