@@ -27,7 +27,7 @@ if ! [ -z "$PKG" ] && ! [ -z "$VERSION" ] ; then
       mkdir -p sources/$PKG
       {
         cd sources/$PKG
-        apt-get -y source $PKG &>> $LOGFILE
+        apt-get -yq source $PKG &>> $LOGFILE
         SOURCEDIR=$(realpath $(find . -mindepth 1 -maxdepth 1 -type d | head -n1))
         ! [ -z $SOURCEDIR ] && {
           cd $SOURCEDIR
