@@ -15,7 +15,7 @@ if [[ $# -gt 0 ]]; then
 fi
 
 function whiptailify() {
-  local PROGRESS=$(( $PKG_IDX / $PKG_COUNT ))
+  local PROGRESS=$(( 100 * $PKG_IDX / $PKG_COUNT ))
   local MSG
   local MSG1
   local MSG2
@@ -46,5 +46,5 @@ for PKG in $PACKAGES ; do
   else
     echo $PKG $VERSION >> failed
     echo "failed"
-  fi | whiptailify
+  fi 2>&1 | whiptailify
 done | whiptail --title "Building all Debian packages" --gauge "Warm-up" 6 78 0
