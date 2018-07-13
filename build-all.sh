@@ -22,8 +22,8 @@ function whiptailify() {
   while read MSG; do
     MSG1="${MSG:0:74}"
     MSG2="${MSG:74:74}"
-    echo "[$PKG_IDX/$PKG_COUNT] $PKG: $MSG" >> logs/000-meta-build-all.log
-    echo -e "XXX\n${PROGRESS}\n$PKG: ${MSG}\nXXX"
+    echo "$(date) [$PKG_IDX/$PKG_COUNT] $PKG: $MSG" | tee -a logs/000-meta-build-all.log
+    #echo -e "XXX\n${PROGRESS}\n$PKG: ${MSG}\nXXX"
   done
 }
 
@@ -47,4 +47,4 @@ for PKG in $PACKAGES ; do
     echo $PKG $VERSION >> failed
     echo "failed"
   fi 2>&1 | whiptailify
-done | whiptail --title "Building all Debian packages" --gauge "Warm-up" 6 78 0
+done #| whiptail --title "Building all Debian packages" --gauge "Warm-up" 6 78 0

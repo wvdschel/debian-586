@@ -36,8 +36,8 @@ if ! [ -z "$PKG" ] && ! [ -z "$VERSION" ] ; then
           sudo apt-get -y build-dep $PKG &> $LOGFILE || {
             echo normal build dependency installation failed, trying to install missing packages manually.
             MISSING_PACKAGES=$(dpkg-checkbuilddeps 2>&1 | cut -d: -f4)
-            sudo apt-get autoremove -y &>> $LOGFILE
-            sudo apt-get install -y ${MISSING_PACKAGES} &>> $LOGFILE
+            sudo apt-get autoremove -qy &>> $LOGFILE
+            sudo apt-get install -qy ${MISSING_PACKAGES} &>> $LOGFILE
           } || (echo failed to install build dependencies for $PKG ; exit 1)
           echo building from sources in $SOURCEDIR
           dpkg-buildpackage --build-by="${DPKG_BUILD_MAINTAINER}" ${DPKG_BUILDPACKAGE_FLAGS} &>> $LOGFILE 
@@ -51,7 +51,11 @@ if ! [ -z "$PKG" ] && ! [ -z "$VERSION" ] ; then
     else
       echo $PKG version $VERSION was built already, not rebuilding
     fi
-  } || ( echo Failed to build $PKG. Check $LOGFILE for details ; exit 1 )
+  } 0<&- || ( echo Failed to build $PKG. Check $LOGFILE for details ; exit 1 ) # 0<&- means STDIN is disabled for the entire block
+  if ! [ -f packages/${PKG}_${VERSION}[+_]*.deb ]; then
+    echo no package matching ${PKG} version ${VERSION} found in packages/ AFTER building from source. Considering the build to have failed.
+    exit 1
+  fi
 else
   echo usage: $0 PACKAGE VERSION
 fi
