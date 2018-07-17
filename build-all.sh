@@ -17,13 +17,8 @@ fi
 function whiptailify() {
   local PROGRESS=$(( 100 * $PKG_IDX / $PKG_COUNT ))
   local MSG
-  local MSG1
-  local MSG2
   while read MSG; do
-    MSG1="${MSG:0:74}"
-    MSG2="${MSG:74:74}"
     echo "$(date) [$PKG_IDX/$PKG_COUNT] $PKG: $MSG" | tee -a logs/000-meta-build-all.log
-    #echo -e "XXX\n${PROGRESS}\n$PKG: ${MSG}\nXXX"
   done
 }
 
@@ -38,13 +33,21 @@ for PKG in $PACKAGES ; do
   
   VERSION=$(cat <<<$PKG_LIST | grep $PKG/ | cut -d' ' -f2 | cut -d'+' -f1 | head -n1)
   VERSION=${VERSION#*:}
+  VERSION="${VERSION%%[^0-9.\-]*}"
 
   if [ -z "$VERSION" ] ; then
     echo "failed to determine version for $PKG"
+  elif egrep -q "^${PKG} ${VERSION}$" blacklist; then
+    echo $PKG $VERSION is blacklisted, skipping build.
+  elif egrep -q "^${PKG} ${VERSION}$" failed; then
+    echo $PKG $VERSION has failed before, skipping build. To retry, remove the line for $PKG $VERSION from ./failed
+  elif [ -f packages/${PKG}_${VERSION}*.deb ]; then
+    #echo $PKG version $VERSION was built already, not rebuilding
+    continue
   elif ./build-pkg.sh $PKG $VERSION ; then
     echo "finished"
   else
     echo $PKG $VERSION >> failed
     echo "failed"
   fi 2>&1 | whiptailify
-done #| whiptail --title "Building all Debian packages" --gauge "Warm-up" 6 78 0
+done
